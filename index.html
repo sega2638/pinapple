@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
-    <title>庫存管理系統 · Google Sheets 同步</title>
+    <title>庫存管理系統 · 台斤重量版</title>
     <!-- Font Awesome 6 圖標 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- XLSX 匯出套件 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* ===== 全域樣式 ===== */
+        /* ===== 全域樣式 (保持不變) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -28,7 +28,6 @@
             margin: 0 auto;
         }
 
-        /* 頁首 */
         .header {
             background: linear-gradient(145deg, #10b981, #059669);
             color: white;
@@ -56,10 +55,9 @@
             opacity: 0.9;
         }
 
-        /* ===== 導航卡片（四色按鈕）===== */
         .nav-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 16px;
             margin-bottom: 30px;
         }
@@ -90,10 +88,8 @@
         }
         .nav-btn.outbound.active { background: #ef4444; }
         .nav-btn.inbound.active  { background: #3b82f6; }
-        .nav-btn.summary.active  { background: #f59e0b; }
         .nav-btn.settings.active { background: #6b7280; }
 
-        /* ===== 主要內容卡片 ===== */
         .tab-content {
             display: none;
             background: white;
@@ -117,7 +113,6 @@
             border-bottom: 3px solid #e5e7eb;
         }
 
-        /* 表單卡片 */
         .form-card {
             background: #f9fafb;
             border-radius: 20px;
@@ -155,6 +150,21 @@
             box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
             outline: none;
         }
+        input:read-only {
+            background-color: #f3f4f6;
+            cursor: default;
+        }
+        .weight-conversion {
+            background: #fef3c7;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         button {
             border: none;
             border-radius: 16px;
@@ -171,15 +181,19 @@
             width: 100%;
             margin-top: 10px;
         }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-outbound { background: #ef4444; }
         .btn-inbound  { background: #3b82f6; }
         .btn-success  { background: #10b981; }
         .btn-warning  { background: #f59e0b; }
         .btn-secondary{ background: #9ca3af; }
         .btn-danger   { background: #ef4444; }
-        button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
-        /* 狀態訊息 */
         .status-message {
             padding: 16px;
             border-radius: 14px;
@@ -191,34 +205,6 @@
         .status-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .status-warning { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
 
-        /* Google 表單連結區塊 */
-        .google-box {
-            background: #eff6ff;
-            border: 2px solid #93c5fd;
-            border-radius: 20px;
-            padding: 24px;
-            margin-top: 30px;
-        }
-        .google-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: white;
-            color: #2563eb;
-            padding: 14px 28px;
-            border-radius: 40px;
-            text-decoration: none;
-            font-weight: 600;
-            border: 2px solid #93c5fd;
-            margin-top: 12px;
-        }
-        .google-link:hover {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-
-        /* 備註加總區塊 */
         .notes-summary {
             background: #fffbeb;
             border: 2px solid #fbbf24;
@@ -257,7 +243,6 @@
             border-left: 6px solid #f59e0b;
         }
 
-        /* 記錄列表 */
         .record-list {
             margin-top: 25px;
             max-height: 550px;
@@ -284,7 +269,6 @@
         .badge-outbound { background: #ef4444; }
         .badge-inbound  { background: #3b82f6; }
 
-        /* 後台管理區塊 */
         .info-box {
             background: #f9fafb;
             border-left: 8px solid #3b82f6;
@@ -294,14 +278,12 @@
         }
         .info-box h3 { display: flex; gap: 10px; margin-bottom: 20px; }
 
-        /* 空狀態 */
         .empty-state {
             text-align: center;
             padding: 50px;
             color: #9ca3af;
         }
 
-        /* 響應式 */
         @media (max-width: 640px) {
             body { padding: 12px; }
             .header { flex-direction: column; text-align: center; }
@@ -311,7 +293,6 @@
             .notes-stats { grid-template-columns: 1fr; }
         }
 
-        /* 匯出模態框 */
         .modal-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
             align-items: center; justify-content: center; z-index: 1000;
@@ -320,29 +301,36 @@
         .modal {
             background: white; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%;
         }
+        .export-option {
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 頁首 -->
         <div class="header">
-            <i class="fas fa-warehouse"></i>
+            <i class="fas fa-weight-hanging"></i>
             <div>
                 <h1>庫存管理系統</h1>
-                <p><i class="fas fa-cloud-upload-alt"></i> 已啟用 Google Sheets 自動同步 (方案A穩定版)</p>
+                <p><i class="fas fa-cloud-upload-alt"></i> 台斤重量版 · 自動同步 Google Sheets</p>
             </div>
         </div>
 
-        <!-- 導航按鈕組 -->
         <div class="nav-grid">
             <button class="nav-btn outbound active" onclick="switchTab('outbound')">
                 <i class="fas fa-sign-out-alt"></i> 出庫記錄
             </button>
             <button class="nav-btn inbound" onclick="switchTab('inbound')">
                 <i class="fas fa-sign-in-alt"></i> 入庫記錄
-            </button>
-            <button class="nav-btn summary" onclick="switchTab('summary')">
-                <i class="fas fa-chart-bar"></i> 統計查詢
             </button>
             <button class="nav-btn settings" onclick="switchTab('settings')">
                 <i class="fas fa-cog"></i> 系統設定
@@ -376,39 +364,49 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>🔢 數量</label>
-                            <input type="number" id="outbound-quantity" step="0.01" min="0.01" required>
+                            <label>📏 單位</label>
+                            <select id="outbound-unit" required>
+                                <option value="">請選擇單位</option>
+                            </select>
                         </div>
+                        <div class="form-group">
+                            <label>🔢 數量</label>
+                            <input type="number" id="outbound-quantity" step="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>🏚️ 倉庫</label>
                             <select id="outbound-warehouse" required></select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>📝 備註 (用途/領用人等)</label>
-                        <textarea id="outbound-notes" rows="2" placeholder="例：生產線A、緊急維修..."></textarea>
+                    <!-- 重量區域：台斤輸入 + 公斤唯讀 -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>⚖️ 重量 (台斤)</label>
+                            <input type="number" id="outbound-weight-tael" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>⚖️ 重量 (公斤)</label>
+                            <input type="text" id="outbound-weight-kg" readonly placeholder="自動換算">
+                        </div>
                     </div>
-                    <button type="submit" class="btn-outbound">
+                    <!-- 備註欄位移至最後 -->
+                    <div class="form-group">
+                        <label>📝 備註</label>
+                        <textarea id="outbound-notes" rows="2" placeholder="用途、領用人、原因等"></textarea>
+                    </div>
+                    <button type="submit" id="outbound-submit-btn" class="btn-outbound">
                         <i class="fas fa-paper-plane"></i> 提交出庫記錄 (同步至 Google Sheets)
                     </button>
                 </form>
                 <div id="outbound-status" class="status-message"></div>
             </div>
 
-            <!-- 今日出庫備註加總 -->
             <div id="outbound-notes-summary" class="notes-summary">
                 <h3><i class="fas fa-sticky-note"></i> 今日出庫備註加總</h3>
                 <div id="outbound-notes-stats" class="notes-stats"></div>
                 <div id="outbound-notes-list" class="notes-list"></div>
-            </div>
-
-            <!-- Google 表單連結區塊 (出庫) -->
-            <div id="outbound-google-box" class="google-box">
-                <h3><i class="fab fa-google"></i> Google 表單快速填寫</h3>
-                <p id="outbound-google-status">尚未設定出庫表單連結，請至系統設定中設定</p>
-                <a href="#" id="outbound-google-link" class="google-link" target="_blank" style="display: none;">
-                    <i class="fas fa-external-link-alt"></i> 開啟出庫 Google 表單
-                </a>
             </div>
         </div>
 
@@ -439,60 +437,50 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>🔢 數量</label>
-                            <input type="number" id="inbound-quantity" step="0.01" min="0.01" required>
+                            <label>📏 單位</label>
+                            <select id="inbound-unit" required>
+                                <option value="">請選擇單位</option>
+                            </select>
                         </div>
+                        <div class="form-group">
+                            <label>🔢 數量</label>
+                            <input type="number" id="inbound-quantity" step="1" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label>🏚️ 倉庫</label>
                             <select id="inbound-warehouse" required></select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>📝 備註 (供應商/批號等)</label>
-                        <textarea id="inbound-notes" rows="2" placeholder="例：供應商XX、批號2026-001"></textarea>
+                    <!-- 重量區域：台斤輸入 + 公斤唯讀 -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>⚖️ 重量 (台斤)</label>
+                            <input type="number" id="inbound-weight-tael" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>⚖️ 重量 (公斤)</label>
+                            <input type="text" id="inbound-weight-kg" readonly placeholder="自動換算">
+                        </div>
                     </div>
-                    <button type="submit" class="btn-inbound">
+                    <!-- 備註欄位移至最後 -->
+                    <div class="form-group">
+                        <label>📝 備註</label>
+                        <textarea id="inbound-notes" rows="2" placeholder="供應商、批號、來源等"></textarea>
+                    </div>
+                    <button type="submit" id="inbound-submit-btn" class="btn-inbound">
                         <i class="fas fa-paper-plane"></i> 提交入庫記錄 (同步至 Google Sheets)
                     </button>
                 </form>
                 <div id="inbound-status" class="status-message"></div>
             </div>
 
-            <!-- 今日入庫備註加總 -->
             <div id="inbound-notes-summary" class="notes-summary">
                 <h3><i class="fas fa-sticky-note"></i> 今日入庫備註加總</h3>
                 <div id="inbound-notes-stats" class="notes-stats"></div>
                 <div id="inbound-notes-list" class="notes-list"></div>
             </div>
-
-            <!-- Google 表單連結區塊 (入庫) -->
-            <div id="inbound-google-box" class="google-box">
-                <h3><i class="fab fa-google"></i> Google 表單快速填寫</h3>
-                <p id="inbound-google-status">尚未設定入庫表單連結，請至系統設定中設定</p>
-                <a href="#" id="inbound-google-link" class="google-link" target="_blank" style="display: none;">
-                    <i class="fas fa-external-link-alt"></i> 開啟入庫 Google 表單
-                </a>
-            </div>
-        </div>
-
-        <!-- ========== 統計查詢 ========== -->
-        <div id="tab-summary" class="tab-content">
-            <h2><i class="fas fa-chart-bar"></i> 統計查詢</h2>
-            <div class="form-row" style="align-items: flex-end;">
-                <div class="form-group">
-                    <label>📅 選擇日期</label>
-                    <input type="date" id="summary-date">
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button id="today-btn" class="btn-success" style="width: auto; padding: 14px 28px;"><i class="fas fa-calendar-day"></i> 今日</button>
-                    <button id="view-summary" class="btn-secondary" style="width: auto; padding: 14px 28px;"><i class="fas fa-search"></i> 查詢</button>
-                </div>
-            </div>
-            <div class="form-row" style="margin-top: 10px;">
-                <button id="prev-day" class="btn-secondary" style="width: auto;"><i class="fas fa-chevron-left"></i> 前一天</button>
-                <button id="next-day" class="btn-secondary" style="width: auto;"><i class="fas fa-chevron-right"></i> 後一天</button>
-            </div>
-            <div id="daily-records" class="record-list"></div>
         </div>
 
         <!-- ========== 系統設定 ========== -->
@@ -508,21 +496,21 @@
                 </p>
             </div>
 
-            <!-- Google 表單連結設定 -->
+            <!-- Google 試算表連結設定 -->
             <div class="info-box">
-                <h3><i class="fab fa-google"></i> Google 表單連結設定</h3>
+                <h3><i class="fab fa-google"></i> Google 試算表連結設定</h3>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>📤 出庫表單連結</label>
-                        <input type="url" id="google-form-outbound" placeholder="https://docs.google.com/forms/d/...">
+                        <label>📤 出庫試算表連結</label>
+                        <input type="url" id="google-form-outbound" placeholder="貼上 Google 試算表連結">
                     </div>
                     <div class="form-group">
-                        <label>📥 入庫表單連結</label>
-                        <input type="url" id="google-form-inbound" placeholder="https://docs.google.com/forms/d/...">
+                        <label>📥 入庫試算表連結</label>
+                        <input type="url" id="google-form-inbound" placeholder="貼上 Google 試算表連結">
                     </div>
                 </div>
                 <button id="save-google-forms" class="btn-success" style="width: auto; padding: 14px 36px;">
-                    <i class="fas fa-save"></i> 儲存表單連結
+                    <i class="fas fa-save"></i> 儲存連結
                 </button>
                 <div id="google-forms-status" class="status-message"></div>
             </div>
@@ -542,10 +530,20 @@
                 <h3><i class="fas fa-boxes"></i> 物品管理</h3>
                 <div class="form-row">
                     <input type="text" id="new-item-name" placeholder="物品名稱">
-                    <input type="text" id="new-item-unit" placeholder="單位 (如 公斤、個)">
+                    <input type="text" id="new-item-unit-default" placeholder="預設單位 (如 包、箱)">
                     <button id="add-item" class="btn-success" style="width: auto;"><i class="fas fa-plus"></i> 新增</button>
                 </div>
                 <div id="item-list" class="record-list" style="max-height: 250px;"></div>
+            </div>
+
+            <!-- 單位管理 -->
+            <div class="info-box" style="border-left-color: #f59e0b;">
+                <h3><i class="fas fa-ruler"></i> 單位管理</h3>
+                <div class="form-row">
+                    <input type="text" id="new-unit" placeholder="新增單位名稱 (例：包、箱、袋)">
+                    <button id="add-unit" class="btn-success" style="width: auto;"><i class="fas fa-plus"></i> 新增</button>
+                </div>
+                <div id="unit-list" class="record-list" style="max-height: 250px;"></div>
             </div>
 
             <!-- 倉庫管理 -->
@@ -571,35 +569,17 @@
         </div>
     </div>
 
-    <!-- 匯出模態框 (Excel 選項) -->
+    <!-- 匯出模態框 -->
     <div id="export-modal" class="modal-overlay">
         <div class="modal">
             <h3 style="margin-bottom: 24px;"><i class="fas fa-file-excel"></i> 匯出 Excel 報表</h3>
             <div class="export-option" onclick="selectExport('all')">
-                <label><input type="radio" name="export-type" value="all" checked> 📋 全部分頁 (總表+週+月)</label>
+                <label><input type="radio" name="export-type" value="all" checked> 📋 全部分頁</label>
             </div>
             <div class="export-option" onclick="selectExport('total')">
-                <label><input type="radio" name="export-type" value="total"> 📄 總表 (所有記錄)</label>
+                <label><input type="radio" name="export-type" value="total"> 📄 總表</label>
             </div>
-            <div class="export-option" onclick="selectExport('weekly')">
-                <label><input type="radio" name="export-type" value="weekly"> 📅 本週報表</label>
-            </div>
-            <div class="export-option" onclick="selectExport('monthly')">
-                <label><input type="radio" name="export-type" value="monthly"> 📆 本月報表</label>
-            </div>
-            <div class="export-option" onclick="selectExport('total-week')">
-                <label><input type="radio" name="export-type" value="total-week"> 📚 總表 + 特定週</label>
-                <div id="week-selector" style="margin-left: 28px; margin-top: 8px; display: none;">
-                    <select id="export-week" style="padding: 8px; border-radius: 10px;"></select>
-                </div>
-            </div>
-            <div class="export-option" onclick="selectExport('total-month')">
-                <label><input type="radio" name="export-type" value="total-month"> 📚 總表 + 特定月</label>
-                <div id="month-selector" style="margin-left: 28px; margin-top: 8px; display: none;">
-                    <select id="export-month" style="padding: 8px; border-radius: 10px;"></select>
-                </div>
-            </div>
-            <div class="modal-actions" style="display: flex; gap: 16px; margin-top: 28px;">
+            <div class="modal-actions">
                 <button class="btn-secondary" onclick="closeModal()" style="width: 50%;">取消</button>
                 <button class="btn-success" onclick="doExport()" style="width: 50%;">下載</button>
             </div>
@@ -608,29 +588,55 @@
 
     <script>
         // ============================================================
-        //  🚀 庫存管理系統 - Google Sheets 同步
-
+        //  🚀 庫存管理系統 - 台斤重量版
         //  ⚠️ 重要：請將下方 GAS_URL 改為您自己的 Apps Script 部署網址！
-        //  ✅ 您已成功測試過方案A，直接貼上即可。
         // ============================================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzltVS3Uolb8QWgJMb8BiHworzXj-qbvLtRNeTd7kQVKVUpXgO5ICa154gzWlQbsfjh/exec'; // ← 請換成您的！
 
-        // ========== 全域資料結構 (儲存在 localStorage) ==========
+        // 台斤轉公斤倍數 (1台斤 = 0.6公斤)
+        const TAEL_TO_KG = 0.6;
+
+        // ========== 全域資料結構 ==========
         let inventoryData = {
-            persons: ['蕭詠方', '王珮儒', '王俊智', '朱宥銓', '何致瑩', '蔡惠如', '魏賢豪', '魏銓輝', '洪承億', '張源展', '陳紐庭', '陳冠瑋', '何淑年', '曾瑛婷', '林佳慧', '林美慧'],
+            persons: ['蕭詠方', '王珮儒', '王俊智', '朱宥銓', '何致瑩', '蔡惠如', '魏賢豪', '魏銓輝', '洪承億', '張源展', '陳紐庭', '陳冠瑋', '何淑年', '曾瑛婷', '林佳慧', '林美慧', '陳映延'],
             items: [
-                { name: '原料A', unit: '公斤' },
-                { name: '原料B', unit: '公斤' },
-                { name: '零件X', unit: '個' },
-                { name: '零件Y', unit: '個' }
+                { name: '鳳梨蘋果汁', unit: '包' },
+                { name: '鳳梨汁', unit: '包' },
+                { name: '金鑽鳳梨', unit: '包' },
+                { name: '香檳鳳梨', unit: '包' },
+                { name: '牛奶鳳梨', unit: '包' },
+                { name: '蜜梨鳳梨', unit: '包' },
+                { name: '甜蜜蜜鳳梨', unit: '箱' },
+                { name: '芒果鳳梨', unit: '袋' },
+                { name: '琉璃鳳梨', unit: '袋' },
+                { name: '玉蘭花鳳梨', unit: '袋' },
+                { name: '土鳳梨', unit: '袋' },
+                { name: '金鑽果乾', unit: '袋' },
+                { name: '香檳果乾', unit: '袋' },
+                { name: '牛奶果乾', unit: '袋' },
+                { name: '蜜梨果乾', unit: '袋' },
+                { name: '甜蜜蜜果乾', unit: '袋' },
+                { name: '芒果果乾', unit: '袋' },
+                { name: '琉璃果乾', unit: '袋' },
+                { name: '玉蘭花果乾', unit: '袋' },
+                { name: '金鑽凍乾', unit: '袋' },
+                { name: '香檳凍乾', unit: '袋' },
+                { name: '牛奶凍乾', unit: '袋' },
+                { name: '蜜梨凍乾', unit: '袋' },
+                { name: '甜蜜蜜凍乾', unit: '袋' },
+                { name: '芒果凍乾', unit: '袋' },
+                { name: '琉璃凍乾', unit: '袋' },
+                { name: '玉蘭花凍乾', unit: '盒' }
             ],
             warehouses: ['A庫', 'B庫', 'C庫'],
+            units: ['包', '箱', '袋', '盒', '罐', '個'],
             records: [],
-            googleForms: {
-                outbound: '',
-                inbound: ''
-            }
+            googleForms: { outbound: '', inbound: '' }
         };
+
+        // 按鈕禁用計時器變數
+        let outboundTimer = null;
+        let inboundTimer = null;
 
         // ========== 初始化 ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -640,10 +646,47 @@
             renderLists();
             updateNotes('outbound');
             updateNotes('inbound');
-            updateGoogleLinksUI();
             setupEventListeners();
-            showTodaySummary();
+            setupWeightConversion();
+            autoClearRecords();
         });
+
+        // ---------- 台斤轉公斤即時換算 ----------
+        function setupWeightConversion() {
+            // 出庫
+            const outboundTael = document.getElementById('outbound-weight-tael');
+            const outboundKg = document.getElementById('outbound-weight-kg');
+            function updateOutboundKg() {
+                const tael = parseFloat(outboundTael.value) || 0;
+                outboundKg.value = (tael * TAEL_TO_KG).toFixed(2) + ' 公斤';
+            }
+            outboundTael.addEventListener('input', updateOutboundKg);
+            updateOutboundKg();
+
+            // 入庫
+            const inboundTael = document.getElementById('inbound-weight-tael');
+            const inboundKg = document.getElementById('inbound-weight-kg');
+            function updateInboundKg() {
+                const tael = parseFloat(inboundTael.value) || 0;
+                inboundKg.value = (tael * TAEL_TO_KG).toFixed(2) + ' 公斤';
+            }
+            inboundTael.addEventListener('input', updateInboundKg);
+            updateInboundKg();
+        }
+
+        // ---------- 每天凌晨自動清空記錄 ----------
+        function autoClearRecords() {
+            const today = new Date().toISOString().slice(0,10);
+            const lastClear = localStorage.getItem('lastClearDate');
+            if (lastClear !== today) {
+                inventoryData.records = [];
+                saveData();
+                localStorage.setItem('lastClearDate', today);
+                console.log(`✅ 已自動清空本地記錄 (${today})`);
+                updateNotes('outbound');
+                updateNotes('inbound');
+            }
+        }
 
         // ---------- 資料儲存/載入 ----------
         function loadData() {
@@ -668,21 +711,29 @@
             document.getElementById('outbound-time').value = timeStr;
             document.getElementById('inbound-date').value = dateStr;
             document.getElementById('inbound-time').value = timeStr;
-            document.getElementById('summary-date').value = dateStr;
         }
 
         // ---------- 初始化所有下拉選單 ----------
         function initSelects() {
+            // 人員
             ['outbound-person', 'inbound-person'].forEach(id => {
                 const sel = document.getElementById(id);
                 sel.innerHTML = '<option value="">請選擇</option>';
                 inventoryData.persons.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
             });
+            // 物品
             ['outbound-item', 'inbound-item'].forEach(id => {
                 const sel = document.getElementById(id);
                 sel.innerHTML = '<option value="">請選擇</option>';
-                inventoryData.items.forEach(it => sel.innerHTML += `<option value="${it.name}">${it.name} (${it.unit})</option>`);
+                inventoryData.items.forEach(it => sel.innerHTML += `<option value="${it.name}">${it.name}</option>`);
             });
+            // 單位
+            ['outbound-unit', 'inbound-unit'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = '<option value="">請選擇單位</option>';
+                inventoryData.units.forEach(u => sel.innerHTML += `<option value="${u}">${u}</option>`);
+            });
+            // 倉庫
             ['outbound-warehouse', 'inbound-warehouse'].forEach(id => {
                 const sel = document.getElementById(id);
                 sel.innerHTML = '<option value="">請選擇</option>';
@@ -693,80 +744,123 @@
         // ---------- 事件監聽綁定 ----------
         function setupEventListeners() {
             // 出庫提交
-            document.getElementById('outboundForm').addEventListener('submit', async (e) => {
+            const outboundForm = document.getElementById('outboundForm');
+            const outboundBtn = document.getElementById('outbound-submit-btn');
+            outboundForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const form = e.target;
-                const person = document.getElementById('outbound-person').value;
-                const itemName = document.getElementById('outbound-item').value;
-                const item = inventoryData.items.find(i => i.name === itemName);
-                const record = {
-                    id: Date.now(), timestamp: Date.now(),
-                    date: document.getElementById('outbound-date').value,
-                    time: document.getElementById('outbound-time').value,
-                    type: '出庫',
-                    operator: person,
-                    item: itemName,
-                    quantity: parseFloat(document.getElementById('outbound-quantity').value),
-                    unit: item ? item.unit : '',
-                    warehouse: document.getElementById('outbound-warehouse').value,
-                    notes: document.getElementById('outbound-notes').value
-                };
-                inventoryData.records.push(record);
-                saveData();
-                // 同步到 Google Sheets (方案A)
-                const syncRes = await syncToSheet(record);
-                if (syncRes.success) {
-                    showStatus('outbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
-                } else {
-                    showStatus('outbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                if (outboundBtn.disabled) return;
+                outboundBtn.disabled = true;
+
+                try {
+                    const person = document.getElementById('outbound-person').value;
+                    const itemName = document.getElementById('outbound-item').value;
+                    const unit = document.getElementById('outbound-unit').value;
+                    const quantity = parseInt(document.getElementById('outbound-quantity').value) || 1;
+                    const tael = parseFloat(document.getElementById('outbound-weight-tael').value);
+                    const kg = tael * TAEL_TO_KG;
+                    
+                    if (!unit) throw new Error('請選擇單位');
+                    
+                    const record = {
+                        id: Date.now(), timestamp: Date.now(),
+                        date: document.getElementById('outbound-date').value,
+                        time: document.getElementById('outbound-time').value,
+                        type: '出庫',
+                        operator: person,
+                        item: itemName,
+                        unit: unit,
+                        quantity: quantity,
+                        weightTael: tael,
+                        weightKg: kg,
+                        warehouse: document.getElementById('outbound-warehouse').value,
+                        notes: document.getElementById('outbound-notes').value
+                    };
+                    inventoryData.records.push(record);
+                    saveData();
+                    
+                    const syncRes = await syncToSheet(record);
+                    if (syncRes.success) {
+                        showStatus('outbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
+                    } else {
+                        showStatus('outbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                    }
+                    outboundForm.reset();
+                    initDateTime();
+                    document.getElementById('outbound-weight-tael').dispatchEvent(new Event('input'));
+                    updateNotes('outbound');
+                } catch (error) {
+                    showStatus('outbound-status', `❌ 提交失敗：${error.message}`, 'error');
+                } finally {
+                    outboundTimer = setTimeout(() => {
+                        outboundBtn.disabled = false;
+                    }, 10000);
                 }
-                form.reset();
-                initDateTime();
-                updateNotes('outbound');
             });
 
             // 入庫提交
-            document.getElementById('inboundForm').addEventListener('submit', async (e) => {
+            const inboundForm = document.getElementById('inboundForm');
+            const inboundBtn = document.getElementById('inbound-submit-btn');
+            inboundForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const form = e.target;
-                const person = document.getElementById('inbound-person').value;
-                const itemName = document.getElementById('inbound-item').value;
-                const item = inventoryData.items.find(i => i.name === itemName);
-                const record = {
-                    id: Date.now(), timestamp: Date.now(),
-                    date: document.getElementById('inbound-date').value,
-                    time: document.getElementById('inbound-time').value,
-                    type: '入庫',
-                    operator: person,
-                    item: itemName,
-                    quantity: parseFloat(document.getElementById('inbound-quantity').value),
-                    unit: item ? item.unit : '',
-                    warehouse: document.getElementById('inbound-warehouse').value,
-                    notes: document.getElementById('inbound-notes').value
-                };
-                inventoryData.records.push(record);
-                saveData();
-                const syncRes = await syncToSheet(record);
-                if (syncRes.success) {
-                    showStatus('inbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
-                } else {
-                    showStatus('inbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                if (inboundBtn.disabled) return;
+                inboundBtn.disabled = true;
+
+                try {
+                    const person = document.getElementById('inbound-person').value;
+                    const itemName = document.getElementById('inbound-item').value;
+                    const unit = document.getElementById('inbound-unit').value;
+                    const quantity = parseInt(document.getElementById('inbound-quantity').value) || 1;
+                    const tael = parseFloat(document.getElementById('inbound-weight-tael').value);
+                    const kg = tael * TAEL_TO_KG;
+                    
+                    if (!unit) throw new Error('請選擇單位');
+                    
+                    const record = {
+                        id: Date.now(), timestamp: Date.now(),
+                        date: document.getElementById('inbound-date').value,
+                        time: document.getElementById('inbound-time').value,
+                        type: '入庫',
+                        operator: person,
+                        item: itemName,
+                        unit: unit,
+                        quantity: quantity,
+                        weightTael: tael,
+                        weightKg: kg,
+                        warehouse: document.getElementById('inbound-warehouse').value,
+                        notes: document.getElementById('inbound-notes').value
+                    };
+                    inventoryData.records.push(record);
+                    saveData();
+                    
+                    const syncRes = await syncToSheet(record);
+                    if (syncRes.success) {
+                        showStatus('inbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
+                    } else {
+                        showStatus('inbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                    }
+                    inboundForm.reset();
+                    initDateTime();
+                    document.getElementById('inbound-weight-tael').dispatchEvent(new Event('input'));
+                    updateNotes('inbound');
+                } catch (error) {
+                    showStatus('inbound-status', `❌ 提交失敗：${error.message}`, 'error');
+                } finally {
+                    inboundTimer = setTimeout(() => {
+                        inboundBtn.disabled = false;
+                    }, 10000);
                 }
-                form.reset();
-                initDateTime();
-                updateNotes('inbound');
             });
 
-            // 儲存 Google 表單連結
+            // 儲存 Google 試算表連結
             document.getElementById('save-google-forms').addEventListener('click', () => {
                 inventoryData.googleForms.outbound = document.getElementById('google-form-outbound').value.trim();
                 inventoryData.googleForms.inbound = document.getElementById('google-form-inbound').value.trim();
                 saveData();
                 updateGoogleLinksUI();
-                showStatus('google-forms-status', '✅ 表單連結已儲存', 'success');
+                showStatus('google-forms-status', '✅ 試算表連結已儲存', 'success');
             });
 
-            // 人員/物品/倉庫 新增
+            // 人員/物品/單位/倉庫 新增
             document.getElementById('add-person').addEventListener('click', () => {
                 const val = document.getElementById('new-person').value.trim();
                 if (!val) return alert('請輸入名稱');
@@ -777,12 +871,21 @@
             });
             document.getElementById('add-item').addEventListener('click', () => {
                 const name = document.getElementById('new-item-name').value.trim();
-                const unit = document.getElementById('new-item-unit').value.trim();
-                if (!name || !unit) return alert('請填寫完整');
+                const unit = document.getElementById('new-item-unit-default').value.trim();
+                if (!name || !unit) return alert('請填寫物品名稱和預設單位');
                 if (inventoryData.items.some(i => i.name === name)) return alert('物品已存在');
                 inventoryData.items.push({ name, unit });
                 saveData(); initSelects(); renderLists(); showStatus('settings-status', '新增成功', 'success');
-                document.getElementById('new-item-name').value = ''; document.getElementById('new-item-unit').value = '';
+                document.getElementById('new-item-name').value = '';
+                document.getElementById('new-item-unit-default').value = '';
+            });
+            document.getElementById('add-unit').addEventListener('click', () => {
+                const val = document.getElementById('new-unit').value.trim();
+                if (!val) return alert('請輸入單位名稱');
+                if (inventoryData.units.includes(val)) return alert('單位已存在');
+                inventoryData.units.push(val);
+                saveData(); initSelects(); renderLists(); showStatus('settings-status', '新增成功', 'success');
+                document.getElementById('new-unit').value = '';
             });
             document.getElementById('add-warehouse').addEventListener('click', () => {
                 const val = document.getElementById('new-warehouse').value.trim();
@@ -793,25 +896,19 @@
                 document.getElementById('new-warehouse').value = '';
             });
 
-            // 統計查詢按鈕
-            document.getElementById('today-btn').addEventListener('click', showTodaySummary);
-            document.getElementById('view-summary').addEventListener('click', showDailyRecords);
-            document.getElementById('prev-day').addEventListener('click', () => shiftDate(-1));
-            document.getElementById('next-day').addEventListener('click', () => shiftDate(1));
-
             // 匯出/匯入
             document.getElementById('export-data').addEventListener('click', openExportModal);
             document.getElementById('import-data').addEventListener('click', () => document.getElementById('import-file').click());
             document.getElementById('import-file').addEventListener('change', importJSON);
         }
 
-        // ---------- Google Sheets 同步核心 (方案A) ----------
+        // ---------- Google Sheets 同步核心 ----------
         async function syncToSheet(record) {
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 🔥 方案A
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(record)
                 });
                 const result = await response.json();
@@ -822,6 +919,27 @@
             }
         }
 
+        // ---------- 更新 Google 試算表連結 UI ----------
+        function updateGoogleLinksUI() {
+            ['outbound', 'inbound'].forEach(type => {
+                const link = inventoryData.googleForms[type];
+                const statusEl = document.getElementById(`${type}-google-status`);
+                const linkEl = document.getElementById(`${type}-google-link`);
+                if (link && linkEl) {
+                    statusEl.innerText = '✅ 已設定試算表連結，點擊下方按鈕開啟';
+                    linkEl.href = link;
+                    linkEl.style.display = 'inline-flex';
+                } else if (statusEl) {
+                    statusEl.innerText = '⚠️ 尚未設定試算表連結，請至系統設定中設定';
+                    if (linkEl) linkEl.style.display = 'none';
+                }
+            });
+            const outboundInput = document.getElementById('google-form-outbound');
+            const inboundInput = document.getElementById('google-form-inbound');
+            if (outboundInput) outboundInput.value = inventoryData.googleForms.outbound || '';
+            if (inboundInput) inboundInput.value = inventoryData.googleForms.inbound || '';
+        }
+
         // ---------- 今日備註加總 ----------
         function updateNotes(type) {
             const today = new Date().toISOString().slice(0,10);
@@ -830,48 +948,34 @@
             const hasNotes = todayRecords.filter(r => r.notes && r.notes.trim() !== '');
 
             const statsDiv = document.getElementById(`${type}-notes-stats`);
-            statsDiv.innerHTML = `
-                <div class="stat-box"><div class="stat-number">${todayRecords.length}</div><div>今日記錄</div></div>
-                <div class="stat-box"><div class="stat-number">${hasNotes.length}</div><div>有備註</div></div>
-                <div class="stat-box"><div class="stat-number">${todayRecords.length ? Math.round(hasNotes.length/todayRecords.length*100) : 0}%</div><div>備註率</div></div>
-            `;
-            const listDiv = document.getElementById(`${type}-notes-list`);
-            if (!hasNotes.length) {
-                listDiv.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>今日無備註記錄</p></div>';
-            } else {
-                listDiv.innerHTML = hasNotes.map(r => `
-                    <div class="note-item">
-                        <strong>📌 ${r.notes}</strong>
-                        <div style="color:#6b7280; margin-top: 6px; font-size:0.9rem;">
-                            ${r.operator} · ${r.item} ${r.quantity}${r.unit} · ${r.time}
-                        </div>
-                    </div>
-                `).join('');
+            if (statsDiv) {
+                statsDiv.innerHTML = `
+                    <div class="stat-box"><div class="stat-number">${todayRecords.length}</div><div>今日記錄</div></div>
+                    <div class="stat-box"><div class="stat-number">${hasNotes.length}</div><div>有備註</div></div>
+                    <div class="stat-box"><div class="stat-number">${todayRecords.length ? Math.round(hasNotes.length/todayRecords.length*100) : 0}%</div><div>備註率</div></div>
+                `;
             }
-            document.getElementById(`${type}-notes-summary`).style.display = todayRecords.length ? 'block' : 'none';
-        }
-
-        // ---------- Google 表單連結 UI 更新 ----------
-        function updateGoogleLinksUI() {
-            ['outbound', 'inbound'].forEach(type => {
-                const link = inventoryData.googleForms[type];
-                const statusEl = document.getElementById(`${type}-google-status`);
-                const linkEl = document.getElementById(`${type}-google-link`);
-                if (link) {
-                    statusEl.innerText = '✅ 已設定表單連結，點擊下方按鈕開啟';
-                    linkEl.href = link;
-                    linkEl.style.display = 'inline-flex';
+            const listDiv = document.getElementById(`${type}-notes-list`);
+            if (listDiv) {
+                if (!hasNotes.length) {
+                    listDiv.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>今日無備註記錄</p></div>';
                 } else {
-                    statusEl.innerText = '⚠️ 尚未設定表單連結，請至系統設定中設定';
-                    linkEl.style.display = 'none';
+                    listDiv.innerHTML = hasNotes.map(r => `
+                        <div class="note-item">
+                            <strong>📌 ${r.notes}</strong>
+                            <div style="color:#6b7280; margin-top: 6px; font-size:0.9rem;">
+                                ${r.operator} · ${r.item} ${r.quantity}${r.unit} · 
+                                ${r.weightTael}台斤 (${r.weightKg.toFixed(2)}公斤) · ${r.time}
+                            </div>
+                        </div>
+                    `).join('');
                 }
-            });
-            // 將設定值填入後台輸入框
-            document.getElementById('google-form-outbound').value = inventoryData.googleForms.outbound || '';
-            document.getElementById('google-form-inbound').value = inventoryData.googleForms.inbound || '';
+            }
+            const summaryEl = document.getElementById(`${type}-notes-summary`);
+            if (summaryEl) summaryEl.style.display = todayRecords.length ? 'block' : 'none';
         }
 
-        // ---------- 渲染後台清單 (人員/物品/倉庫) ----------
+        // ---------- 渲染後台清單 ----------
         function renderLists() {
             // 人員
             let html = '';
@@ -879,88 +983,37 @@
             document.getElementById('person-list').innerHTML = html || '<div class="empty-state">無人員</div>';
             // 物品
             html = '';
-            inventoryData.items.forEach((it,i) => html += `<div class="record-item"><span><strong>${it.name}</strong> (${it.unit})</span><button class="btn-danger" onclick="deleteListItem('item',${i})"><i class="fas fa-trash"></i></button></div>`);
+            inventoryData.items.forEach((it,i) => html += `<div class="record-item"><span><strong>${it.name}</strong> (預設單位: ${it.unit})</span><button class="btn-danger" onclick="deleteListItem('item',${i})"><i class="fas fa-trash"></i></button></div>`);
             document.getElementById('item-list').innerHTML = html || '<div class="empty-state">無物品</div>';
+            // 單位
+            html = '';
+            inventoryData.units.forEach((u,i) => html += `<div class="record-item"><span><i class="fas fa-ruler"></i> ${u}</span><button class="btn-danger" onclick="deleteListItem('unit',${i})"><i class="fas fa-trash"></i></button></div>`);
+            document.getElementById('unit-list').innerHTML = html || '<div class="empty-state">無單位</div>';
             // 倉庫
             html = '';
             inventoryData.warehouses.forEach((w,i) => html += `<div class="record-item"><span><i class="fas fa-warehouse"></i> ${w}</span><button class="btn-danger" onclick="deleteListItem('warehouse',${i})"><i class="fas fa-trash"></i></button></div>`);
             document.getElementById('warehouse-list').innerHTML = html || '<div class="empty-state">無倉庫</div>';
         }
 
-        // 刪除後台項目 (全域函式)
         window.deleteListItem = function(type, index) {
             if (!confirm('確定刪除？')) return;
             if (type === 'person') inventoryData.persons.splice(index,1);
             if (type === 'item') inventoryData.items.splice(index,1);
+            if (type === 'unit') inventoryData.units.splice(index,1);
             if (type === 'warehouse') inventoryData.warehouses.splice(index,1);
             saveData(); initSelects(); renderLists(); showStatus('settings-status','刪除成功','success');
         };
 
-        // ---------- 統計查詢功能 ----------
-        function showTodaySummary() {
-            const today = new Date().toISOString().slice(0,10);
-            document.getElementById('summary-date').value = today;
-            showDailyRecords();
-        }
-        function showDailyRecords() {
-            const date = document.getElementById('summary-date').value;
-            const records = inventoryData.records.filter(r => r.date === date).sort((a,b)=>b.timestamp-a.timestamp);
-            const container = document.getElementById('daily-records');
-            if (!records.length) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><p>${date} 無記錄</p></div>`;
-                return;
-            }
-            container.innerHTML = records.map(r => `
-                <div class="record-item">
-                    <div>
-                        <span class="badge ${r.type==='出庫'?'badge-outbound':'badge-inbound'}">${r.type}</span>
-                        <strong>${r.item}</strong> ${r.quantity} ${r.unit}
-                        <div style="margin-top: 8px; color: #6b7280;">
-                            👤 ${r.operator} · 🏚️ ${r.warehouse} · ⏰ ${r.time}
-                            ${r.notes ? `<div style="margin-top: 8px; background: #f3f4f6; padding: 10px; border-radius: 8px;">📝 ${r.notes}</div>` : ''}
-                        </div>
-                    </div>
-                    <div><button class="btn-danger" onclick="deleteRecord(${r.id})"><i class="fas fa-trash"></i></button></div>
-                </div>
-            `).join('');
-        }
-        function shiftDate(delta) {
-            const d = new Date(document.getElementById('summary-date').value);
-            d.setDate(d.getDate() + delta);
-            document.getElementById('summary-date').value = d.toISOString().slice(0,10);
-            showDailyRecords();
-        }
-        window.deleteRecord = function(id) {
-            if (!confirm('確定刪除此記錄？')) return;
-            inventoryData.records = inventoryData.records.filter(r => r.id !== id);
-            saveData();
-            showDailyRecords();
-            updateNotes('outbound');
-            updateNotes('inbound');
-        };
-
-        // ---------- 匯出 Excel 相關 ----------
+        // ---------- 匯出功能 ----------
         function openExportModal() {
-            populateWeekMonthOptions();
             document.getElementById('export-modal').classList.add('active');
         }
         window.closeModal = function() { document.getElementById('export-modal').classList.remove('active'); };
         window.selectExport = function(val) {
             document.querySelector(`input[value="${val}"]`).checked = true;
-            document.getElementById('week-selector').style.display = (val === 'total-week') ? 'block' : 'none';
-            document.getElementById('month-selector').style.display = (val === 'total-month') ? 'block' : 'none';
         };
-        function populateWeekMonthOptions() {
-            // 產生週、月選項 (略，完整版會根據記錄產生)
-            const weekSel = document.getElementById('export-week');
-            weekSel.innerHTML = '<option value="">請選擇週別</option>';
-            const monthSel = document.getElementById('export-month');
-            monthSel.innerHTML = '<option value="">請選擇月份</option>';
-            // 實際應用可從記錄中提取，此處簡化
-        }
         window.doExport = function() {
-            // 此處保留完整匯出功能，您可沿用之前的 XLSX 匯出邏輯
-            alert('匯出功能已就緒，可自行擴充 XLSX 完整匯出');
+            alert('匯出功能請自行擴充 XLSX 實作');
             closeModal();
         };
 
@@ -975,7 +1028,7 @@
                     if (confirm('匯入將覆蓋現有資料，確定？')) {
                         inventoryData = imported;
                         saveData();
-                        initSelects(); renderLists(); updateNotes('outbound'); updateNotes('inbound'); updateGoogleLinksUI();
+                        initSelects(); renderLists(); updateNotes('outbound'); updateNotes('inbound');
                         showStatus('settings-status','匯入成功','success');
                     }
                 } catch (ex) { alert('檔案格式錯誤'); }
@@ -987,10 +1040,12 @@
         // ---------- 顯示狀態訊息 ----------
         function showStatus(elId, msg, type) {
             const el = document.getElementById(elId);
-            el.textContent = msg;
-            el.className = `status-message status-${type}`;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 4000);
+            if (el) {
+                el.textContent = msg;
+                el.className = `status-message status-${type}`;
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', 4000);
+            }
         }
 
         // ---------- 切換頁籤 ----------
@@ -1001,7 +1056,6 @@
             event.currentTarget.classList.add('active');
             if (tabId === 'outbound') updateNotes('outbound');
             if (tabId === 'inbound') updateNotes('inbound');
-            if (tabId === 'summary') showDailyRecords();
         };
     </script>
 </body>
