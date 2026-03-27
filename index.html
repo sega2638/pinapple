@@ -154,17 +154,6 @@
             background-color: #f3f4f6;
             cursor: default;
         }
-        .weight-conversion {
-            background: #fef3c7;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-top: 8px;
-            font-size: 0.9rem;
-            color: #92400e;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
         button {
             border: none;
             border-radius: 16px;
@@ -380,18 +369,16 @@
                             <select id="outbound-warehouse" required></select>
                         </div>
                     </div>
-                    <!-- 重量區域：台斤輸入 + 公斤唯讀 -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>⚖️ 重量 (台斤)</label>
-                            <input type="number" id="outbound-weight-tael" step="0.01" min="0.01" required>
+                            <input type="number" id="outbound-weight-tael" step="0.01" min="0.01" placeholder="輸入台斤">
                         </div>
                         <div class="form-group">
                             <label>⚖️ 重量 (公斤)</label>
-                            <input type="text" id="outbound-weight-kg" readonly placeholder="自動換算">
+                            <input type="number" id="outbound-weight-kg" step="0.01" min="0.01" placeholder="輸入公斤">
                         </div>
                     </div>
-                    <!-- 備註欄位移至最後 -->
                     <div class="form-group">
                         <label>📝 備註</label>
                         <textarea id="outbound-notes" rows="2" placeholder="用途、領用人、原因等"></textarea>
@@ -453,18 +440,16 @@
                             <select id="inbound-warehouse" required></select>
                         </div>
                     </div>
-                    <!-- 重量區域：台斤輸入 + 公斤唯讀 -->
                     <div class="form-row">
                         <div class="form-group">
                             <label>⚖️ 重量 (台斤)</label>
-                            <input type="number" id="inbound-weight-tael" step="0.01" min="0.01" required>
+                            <input type="number" id="inbound-weight-tael" step="0.01" min="0.01" placeholder="輸入台斤">
                         </div>
                         <div class="form-group">
                             <label>⚖️ 重量 (公斤)</label>
-                            <input type="text" id="inbound-weight-kg" readonly placeholder="自動換算">
+                            <input type="number" id="inbound-weight-kg" step="0.01" min="0.01" placeholder="輸入公斤">
                         </div>
                     </div>
-                    <!-- 備註欄位移至最後 -->
                     <div class="form-group">
                         <label>📝 備註</label>
                         <textarea id="inbound-notes" rows="2" placeholder="供應商、批號、來源等"></textarea>
@@ -588,13 +573,14 @@
 
     <script>
         // ============================================================
-        //  🚀 庫存管理系統 - 台斤重量版
+        //  🚀 庫存管理系統 - 台斤重量版 (雙向換算 + 提交後清空暫存)
         //  ⚠️ 重要：請將下方 GAS_URL 改為您自己的 Apps Script 部署網址！
         // ============================================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzltVS3Uolb8QWgJMb8BiHworzXj-qbvLtRNeTd7kQVKVUpXgO5ICa154gzWlQbsfjh/exec'; // ← 請換成您的！
 
         // 台斤轉公斤倍數 (1台斤 = 0.6公斤)
         const TAEL_TO_KG = 0.6;
+        const KG_TO_TAEL = 1 / TAEL_TO_KG; // 1公斤 = 1.6667台斤
 
         // ========== 全域資料結構 ==========
         let inventoryData = {
@@ -647,38 +633,66 @@
             updateNotes('outbound');
             updateNotes('inbound');
             setupEventListeners();
-            setupWeightConversion();
-            autoClearRecords();
+            setupWeightConversion();  // 雙向換算
+            autoClearRecords();       // 每天凌晨自動清空（保留作為備用，但主要靠提交後清空）
         });
 
-        // ---------- 台斤轉公斤即時換算 ----------
+        // ---------- 雙向重量換算 ----------
         function setupWeightConversion() {
             // 出庫
             const outboundTael = document.getElementById('outbound-weight-tael');
             const outboundKg = document.getElementById('outbound-weight-kg');
-            function updateOutboundKg() {
-                const tael = parseFloat(outboundTael.value) || 0;
-                outboundKg.value = (tael * TAEL_TO_KG).toFixed(2) + ' 公斤';
+            
+            function updateFromTael() {
+                const tael = parseFloat(outboundTael.value);
+                if (!isNaN(tael) && tael > 0) {
+                    outboundKg.value = (tael * TAEL_TO_KG).toFixed(2);
+                } else {
+                    outboundKg.value = '';
+                }
             }
-            outboundTael.addEventListener('input', updateOutboundKg);
-            updateOutboundKg();
-
+            function updateFromKg() {
+                const kg = parseFloat(outboundKg.value);
+                if (!isNaN(kg) && kg > 0) {
+                    outboundTael.value = (kg * KG_TO_TAEL).toFixed(2);
+                } else {
+                    outboundTael.value = '';
+                }
+            }
+            outboundTael.addEventListener('input', updateFromTael);
+            outboundKg.addEventListener('input', updateFromKg);
+            
             // 入庫
             const inboundTael = document.getElementById('inbound-weight-tael');
             const inboundKg = document.getElementById('inbound-weight-kg');
-            function updateInboundKg() {
-                const tael = parseFloat(inboundTael.value) || 0;
-                inboundKg.value = (tael * TAEL_TO_KG).toFixed(2) + ' 公斤';
+            
+            function updateFromTaelIn() {
+                const tael = parseFloat(inboundTael.value);
+                if (!isNaN(tael) && tael > 0) {
+                    inboundKg.value = (tael * TAEL_TO_KG).toFixed(2);
+                } else {
+                    inboundKg.value = '';
+                }
             }
-            inboundTael.addEventListener('input', updateInboundKg);
-            updateInboundKg();
+            function updateFromKgIn() {
+                const kg = parseFloat(inboundKg.value);
+                if (!isNaN(kg) && kg > 0) {
+                    inboundTael.value = (kg * KG_TO_TAEL).toFixed(2);
+                } else {
+                    inboundTael.value = '';
+                }
+            }
+            inboundTael.addEventListener('input', updateFromTaelIn);
+            inboundKg.addEventListener('input', updateFromKgIn);
         }
 
-        // ---------- 每天凌晨自動清空記錄 ----------
+        // ---------- 每天凌晨自動清空記錄（保留，但主要清空在提交後）----------
         function autoClearRecords() {
             const today = new Date().toISOString().slice(0,10);
             const lastClear = localStorage.getItem('lastClearDate');
             if (lastClear !== today) {
+                // 注意：這裡不清空，因為主要清空在提交時，避免用戶誤會
+                // 但仍保留作為備用
                 inventoryData.records = [];
                 saveData();
                 localStorage.setItem('lastClearDate', today);
@@ -700,6 +714,15 @@
         }
         function saveData() {
             localStorage.setItem('inventorySystem', JSON.stringify(inventoryData));
+        }
+
+        // ---------- 清空所有本地記錄（提交後呼叫）----------
+        function clearLocalRecords() {
+            inventoryData.records = [];
+            saveData();
+            updateNotes('outbound');
+            updateNotes('inbound');
+            console.log('✅ 本地暫存記錄已清空');
         }
 
         // ---------- 設定日期時間為現在 ----------
@@ -757,9 +780,19 @@
                     const unit = document.getElementById('outbound-unit').value;
                     const quantity = parseInt(document.getElementById('outbound-quantity').value) || 1;
                     const tael = parseFloat(document.getElementById('outbound-weight-tael').value);
-                    const kg = tael * TAEL_TO_KG;
+                    const kg = parseFloat(document.getElementById('outbound-weight-kg').value);
                     
+                    if (!person) throw new Error('請選擇操作人員');
+                    if (!itemName) throw new Error('請選擇物品');
                     if (!unit) throw new Error('請選擇單位');
+                    if (isNaN(tael) && isNaN(kg)) throw new Error('請輸入重量（台斤或公斤）');
+                    
+                    // 最終以台斤為準，若只有公斤則換算
+                    let finalTael = tael;
+                    if (isNaN(finalTael) && !isNaN(kg)) {
+                        finalTael = kg * KG_TO_TAEL;
+                    }
+                    const finalKg = finalTael * TAEL_TO_KG;
                     
                     const record = {
                         id: Date.now(), timestamp: Date.now(),
@@ -770,23 +803,30 @@
                         item: itemName,
                         unit: unit,
                         quantity: quantity,
-                        weightTael: tael,
-                        weightKg: kg,
+                        weightTael: finalTael,
+                        weightKg: finalKg,
                         warehouse: document.getElementById('outbound-warehouse').value,
                         notes: document.getElementById('outbound-notes').value
                     };
+                    
+                    // 先儲存到本地（為了同步前保留，但同步後立即清空）
                     inventoryData.records.push(record);
                     saveData();
                     
                     const syncRes = await syncToSheet(record);
                     if (syncRes.success) {
                         showStatus('outbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
+                        // 同步成功後，清空所有本地記錄
+                        clearLocalRecords();
                     } else {
-                        showStatus('outbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                        showStatus('outbound-status', `⚠️ 記錄已儲存本地，但同步失敗：${syncRes.message}`, 'warning');
+                        // 同步失敗時不清空，保留本地記錄以便後續重試
                     }
                     outboundForm.reset();
                     initDateTime();
-                    document.getElementById('outbound-weight-tael').dispatchEvent(new Event('input'));
+                    // 重置重量欄位顯示
+                    document.getElementById('outbound-weight-tael').value = '';
+                    document.getElementById('outbound-weight-kg').value = '';
                     updateNotes('outbound');
                 } catch (error) {
                     showStatus('outbound-status', `❌ 提交失敗：${error.message}`, 'error');
@@ -811,9 +851,18 @@
                     const unit = document.getElementById('inbound-unit').value;
                     const quantity = parseInt(document.getElementById('inbound-quantity').value) || 1;
                     const tael = parseFloat(document.getElementById('inbound-weight-tael').value);
-                    const kg = tael * TAEL_TO_KG;
+                    const kg = parseFloat(document.getElementById('inbound-weight-kg').value);
                     
+                    if (!person) throw new Error('請選擇操作人員');
+                    if (!itemName) throw new Error('請選擇物品');
                     if (!unit) throw new Error('請選擇單位');
+                    if (isNaN(tael) && isNaN(kg)) throw new Error('請輸入重量（台斤或公斤）');
+                    
+                    let finalTael = tael;
+                    if (isNaN(finalTael) && !isNaN(kg)) {
+                        finalTael = kg * KG_TO_TAEL;
+                    }
+                    const finalKg = finalTael * TAEL_TO_KG;
                     
                     const record = {
                         id: Date.now(), timestamp: Date.now(),
@@ -824,23 +873,26 @@
                         item: itemName,
                         unit: unit,
                         quantity: quantity,
-                        weightTael: tael,
-                        weightKg: kg,
+                        weightTael: finalTael,
+                        weightKg: finalKg,
                         warehouse: document.getElementById('inbound-warehouse').value,
                         notes: document.getElementById('inbound-notes').value
                     };
+                    
                     inventoryData.records.push(record);
                     saveData();
                     
                     const syncRes = await syncToSheet(record);
                     if (syncRes.success) {
                         showStatus('inbound-status', `✅ ${syncRes.message} (同步成功)`, 'success');
+                        clearLocalRecords();
                     } else {
-                        showStatus('inbound-status', `⚠️ 記錄已儲存，但同步失敗：${syncRes.message}`, 'warning');
+                        showStatus('inbound-status', `⚠️ 記錄已儲存本地，但同步失敗：${syncRes.message}`, 'warning');
                     }
                     inboundForm.reset();
                     initDateTime();
-                    document.getElementById('inbound-weight-tael').dispatchEvent(new Event('input'));
+                    document.getElementById('inbound-weight-tael').value = '';
+                    document.getElementById('inbound-weight-kg').value = '';
                     updateNotes('inbound');
                 } catch (error) {
                     showStatus('inbound-status', `❌ 提交失敗：${error.message}`, 'error');
@@ -965,7 +1017,7 @@
                             <strong>📌 ${r.notes}</strong>
                             <div style="color:#6b7280; margin-top: 6px; font-size:0.9rem;">
                                 ${r.operator} · ${r.item} ${r.quantity}${r.unit} · 
-                                ${r.weightTael}台斤 (${r.weightKg.toFixed(2)}公斤) · ${r.time}
+                                ${r.weightTael.toFixed(2)}台斤 (${r.weightKg.toFixed(2)}公斤) · ${r.time}
                             </div>
                         </div>
                     `).join('');
