@@ -3,889 +3,392 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
-    <title>庫存管理系統 · 台斤重量版</title>
+    <title>庫存管理系統 · 專業版</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         /* ===== 全域樣式 ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        :root {
+            --primary-color: #10b981;
+            --secondary-color: #3b82f6;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
         }
 
-        body {
-            background-color: #f3f4f6;
-            padding: 20px;
-            color: #1f2937;
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; }
+        body { background-color: var(--bg-color); padding: 20px; color: #1f2937; }
+        .container { max-width: 1200px; margin: 0 auto; }
 
         .header {
             background: linear-gradient(145deg, #10b981, #059669);
-            color: white;
-            padding: 28px 32px;
-            border-radius: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 20px;
+            color: white; padding: 25px; border-radius: 20px; margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            display: flex; align-items: center; gap: 20px;
         }
-        .header i {
-            font-size: 48px;
-            background: rgba(255,255,255,0.2);
-            padding: 16px;
-            border-radius: 20px;
-        }
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .header p {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
+        .header i { font-size: 40px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; }
 
-        .nav-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            margin-bottom: 30px;
-        }
+        .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 25px; }
         .nav-btn {
-            background: white;
-            border: none;
-            border-radius: 20px;
-            padding: 24px 16px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            color: #374151;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-            cursor: pointer;
+            background: white; border: 2px solid transparent; border-radius: 15px; padding: 15px;
+            font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center; gap: 8px; color: #4b5563;
         }
-        .nav-btn i {
-            font-size: 2rem;
-        }
-        .nav-btn.active {
-            color: white;
-            transform: translateY(-4px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.1);
-        }
-        .nav-btn.outbound.active { background: #ef4444; }
-        .nav-btn.inbound.active  { background: #3b82f6; }
+        .nav-btn.active { color: white; transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .nav-btn.outbound.active { background: var(--danger-color); }
+        .nav-btn.inbound.active { background: var(--secondary-color); }
         .nav-btn.settings.active { background: #6b7280; }
 
-        .tab-content {
-            display: none;
-            background: white;
-            border-radius: 28px;
-            padding: 32px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            animation: fade 0.3s;
-        }
+        .tab-content { display: none; background: var(--card-bg); border-radius: 20px; padding: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
-        @keyframes fade { from { opacity: 0.3; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        h2 {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 28px;
-            padding-bottom: 16px;
-            border-bottom: 3px solid #e5e7eb;
-        }
+        .form-card { background: #f9fafb; border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid #e5e7eb; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 10px; font-size: 1rem; }
+        input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
 
-        .form-card {
-            background: #f9fafb;
-            border-radius: 20px;
-            padding: 28px;
-            margin-bottom: 30px;
-            border: 1px solid #e5e7eb;
+        button { 
+            border: none; border-radius: 12px; padding: 14px 20px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: 0.2s; color: white; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 6px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #374151;
-            font-size: 0.95rem;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #d1d5db;
-            border-radius: 14px;
-            font-size: 1rem;
-            transition: 0.2s;
-            background: white;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
-            outline: none;
-        }
-        input:read-only {
-            background-color: #f3f4f6;
-            cursor: default;
-        }
-        button {
-            border: none;
-            border-radius: 16px;
-            padding: 16px 24px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: 0.2s;
-            color: white;
-            width: 100%;
-            margin-top: 10px;
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-outbound { background: #ef4444; }
-        .btn-inbound  { background: #3b82f6; }
-        .btn-success  { background: #10b981; }
-        .btn-warning  { background: #f59e0b; }
-        .btn-secondary{ background: #9ca3af; }
-        .btn-danger   { background: #ef4444; }
-        .btn-primary  { background: #3b82f6; }
-        button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        button:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-outbound { background: var(--danger-color); }
+        .btn-inbound { background: var(--secondary-color); }
+        .btn-success { background: var(--primary-color); }
+        .btn-gray { background: #6b7280; }
+        .btn-outline-danger { background: white; color: var(--danger-color); border: 2px solid var(--danger-color); }
 
-        .status-message {
-            padding: 16px;
-            border-radius: 14px;
-            margin-top: 16px;
-            display: none;
-            font-weight: 500;
-        }
-        .status-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-        .status-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .status-warning { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .status-message { padding: 15px; border-radius: 10px; margin-top: 15px; display: none; font-weight: 600; text-align: center; }
+        .status-success { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
 
-        .notes-summary {
-            background: #fffbeb;
-            border: 2px solid #fbbf24;
-            border-radius: 20px;
-            padding: 24px;
-            margin-top: 30px;
-        }
-        .notes-stats {
-            display: grid;
-            grid-template-columns: repeat(3,1fr);
-            gap: 16px;
-            margin: 20px 0;
-        }
-        .stat-box {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            border: 2px solid #fef3c7;
-        }
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #b45309;
-        }
-        .notes-list {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 16px;
-        }
-        .note-item {
-            background: white;
-            padding: 16px;
-            border-radius: 14px;
-            margin-bottom: 10px;
-            border-left: 6px solid #f59e0b;
-        }
+        .info-box { background: #f9fafb; border-left: 5px solid var(--secondary-color); padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .record-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        .record-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
 
-        .record-list {
-            margin-top: 25px;
-            max-height: 550px;
-            overflow-y: auto;
-        }
-        .record-item {
-            background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .badge {
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: white;
-            margin-right: 12px;
-        }
-        .badge-outbound { background: #ef4444; }
-        .badge-inbound  { background: #3b82f6; }
-
-        .info-box {
-            background: #f9fafb;
-            border-left: 8px solid #3b82f6;
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 30px;
-        }
-        .info-box h3 { display: flex; gap: 10px; margin-bottom: 20px; }
-
-        .empty-state {
-            text-align: center;
-            padding: 50px;
-            color: #9ca3af;
-        }
-
-        @media (max-width: 640px) {
-            body { padding: 12px; }
+        @media (max-width: 600px) {
             .header { flex-direction: column; text-align: center; }
-            .nav-grid { grid-template-columns: 1fr; }
-            .record-item { flex-direction: column; align-items: flex-start; }
-            .record-actions { margin-top: 16px; width: 100%; }
-            .notes-stats { grid-template-columns: 1fr; }
-        }
-
-        .modal-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            align-items: center; justify-content: center; z-index: 1000;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal {
-            background: white; border-radius: 28px; padding: 32px; max-width: 500px; width: 90%;
-        }
-        .export-option {
-            padding: 12px;
-            margin-bottom: 8px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <i class="fas fa-weight-hanging"></i>
+            <i class="fas fa-boxes-stacked"></i>
             <div>
                 <h1>庫存管理系統</h1>
-                <p><i class="fas fa-cloud-upload-alt"></i> 台斤重量版 · 自動同步 Google Sheets</p>
+                <p>雲端同步 · 自動計算 · 報表匯出</p>
             </div>
         </div>
 
         <div class="nav-grid">
             <button class="nav-btn outbound active" onclick="switchTab('outbound')">
-                <i class="fas fa-sign-out-alt"></i> 出庫記錄
+                <i class="fas fa-upload"></i> 出庫記錄
             </button>
             <button class="nav-btn inbound" onclick="switchTab('inbound')">
-                <i class="fas fa-sign-in-alt"></i> 入庫記錄
+                <i class="fas fa-download"></i> 入庫記錄
             </button>
             <button class="nav-btn settings" onclick="switchTab('settings')">
-                <i class="fas fa-cog"></i> 系統設定
+                <i class="fas fa-user-gear"></i> 系統設定
             </button>
         </div>
 
         <div id="tab-outbound" class="tab-content active">
-            <h2><i class="fas fa-sign-out-alt"></i> 出庫記錄</h2>
+            <h2><i class="fas fa-minus-circle" style="color:var(--danger-color)"></i> 填寫出庫資料</h2>
             <div class="form-card">
                 <form id="outboundForm">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>📅 日期</label>
-                            <input type="date" id="outbound-date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>⏰ 時間</label>
-                            <input type="time" id="outbound-time" required>
-                        </div>
+                        <div><label>📅 日期</label><input type="date" id="outbound-date" required></div>
+                        <div><label>⏰ 時間</label><input type="time" id="outbound-time" required></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>👤 操作人員</label>
-                            <select id="outbound-person" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label>📦 物品名稱</label>
-                            <select id="outbound-item" required></select>
-                        </div>
+                        <div><label>👤 操作人</label><select id="outbound-person" required></select></div>
+                        <div><label>📦 物品</label><select id="outbound-item" required></select></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>📏 單位</label>
-                            <select id="outbound-unit" required>
-                                <option value="">請選擇單位</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>🔢 數量</label>
-                            <input type="number" id="outbound-quantity" step="1" min="1" required>
-                        </div>
+                        <div><label>📏 單位</label><select id="outbound-unit" required></select></div>
+                        <div><label>🔢 數量</label><input type="number" id="outbound-quantity" min="1" required></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>🏚️ 倉庫</label>
-                            <select id="outbound-warehouse" required></select>
-                        </div>
+                        <div><label>⚖️ 台斤</label><input type="number" id="outbound-weight-tael" step="0.01" placeholder="自動換算"></div>
+                        <div><label>⚖️ 公斤</label><input type="number" id="outbound-weight-kg" step="0.01" placeholder="自動換算"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>⚖️ 重量 (台斤)</label>
-                            <input type="number" id="outbound-weight-tael" step="0.01" min="0.01" placeholder="輸入台斤">
-                        </div>
-                        <div class="form-group">
-                            <label>⚖️ 重量 (公斤)</label>
-                            <input type="number" id="outbound-weight-kg" step="0.01" min="0.01" placeholder="輸入公斤">
-                        </div>
+                        <div><label>🏚️ 倉庫</label><select id="outbound-warehouse" required></select></div>
                     </div>
-                    <div class="form-group">
-                        <label>📝 備註</label>
-                        <textarea id="outbound-notes" rows="2" placeholder="用途、領用人、原因等"></textarea>
-                    </div>
-                    <button type="submit" id="outbound-submit-btn" class="btn-outbound">
-                        <i class="fas fa-paper-plane"></i> 提交出庫記錄 (同步至 Google Sheets)
+                    <label>📝 備註</label>
+                    <textarea id="outbound-notes" rows="2" placeholder="備註用途或批號..."></textarea>
+                    <button type="submit" id="outbound-btn" class="btn-outbound" style="margin-top:15px">
+                        <i class="fas fa-cloud-arrow-up"></i> 提交出庫並同步
                     </button>
                 </form>
                 <div id="outbound-status" class="status-message"></div>
             </div>
-
-            <div id="outbound-notes-summary" class="notes-summary">
-                <h3><i class="fas fa-sticky-note"></i> 今日出庫備註加總</h3>
-                <div id="outbound-notes-stats" class="notes-stats"></div>
-                <div id="outbound-notes-list" class="notes-list"></div>
-            </div>
         </div>
 
         <div id="tab-inbound" class="tab-content">
-            <h2><i class="fas fa-sign-in-alt"></i> 入庫記錄</h2>
+            <h2><i class="fas fa-plus-circle" style="color:var(--secondary-color)"></i> 填寫入庫資料</h2>
             <div class="form-card">
                 <form id="inboundForm">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>📅 日期</label>
-                            <input type="date" id="inbound-date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>⏰ 時間</label>
-                            <input type="time" id="inbound-time" required>
-                        </div>
+                        <div><label>📅 日期</label><input type="date" id="inbound-date" required></div>
+                        <div><label>⏰ 時間</label><input type="time" id="inbound-time" required></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>👤 操作人員</label>
-                            <select id="inbound-person" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label>📦 物品名稱</label>
-                            <select id="inbound-item" required></select>
-                        </div>
+                        <div><label>👤 操作人</label><select id="inbound-person" required></select></div>
+                        <div><label>📦 物品</label><select id="inbound-item" required></select></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>📏 單位</label>
-                            <select id="inbound-unit" required>
-                                <option value="">請選擇單位</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>🔢 數量</label>
-                            <input type="number" id="inbound-quantity" step="1" min="1" required>
-                        </div>
+                        <div><label>📏 單位</label><select id="inbound-unit" required></select></div>
+                        <div><label>🔢 數量</label><input type="number" id="inbound-quantity" min="1" required></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>🏚️ 倉庫</label>
-                            <select id="inbound-warehouse" required></select>
-                        </div>
+                        <div><label>⚖️ 台斤</label><input type="number" id="inbound-weight-tael" step="0.01" placeholder="自動換算"></div>
+                        <div><label>⚖️ 公斤</label><input type="number" id="inbound-weight-kg" step="0.01" placeholder="自動換算"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label>⚖️ 重量 (台斤)</label>
-                            <input type="number" id="inbound-weight-tael" step="0.01" min="0.01" placeholder="輸入台斤">
-                        </div>
-                        <div class="form-group">
-                            <label>⚖️ 重量 (公斤)</label>
-                            <input type="number" id="inbound-weight-kg" step="0.01" min="0.01" placeholder="輸入公斤">
-                        </div>
+                        <div><label>🏚️ 倉庫</label><select id="inbound-warehouse" required></select></div>
                     </div>
-                    <div class="form-group">
-                        <label>📝 備註</label>
-                        <textarea id="inbound-notes" rows="2" placeholder="供應商、批號、來源等"></textarea>
-                    </div>
-                    <button type="submit" id="inbound-submit-btn" class="btn-inbound">
-                        <i class="fas fa-paper-plane"></i> 提交入庫記錄 (同步至 Google Sheets)
+                    <label>📝 備註</label>
+                    <textarea id="inbound-notes" rows="2" placeholder="供應商資訊等..."></textarea>
+                    <button type="submit" id="inbound-btn" class="btn-inbound" style="margin-top:15px">
+                        <i class="fas fa-cloud-arrow-up"></i> 提交入庫並同步
                     </button>
                 </form>
                 <div id="inbound-status" class="status-message"></div>
             </div>
-
-            <div id="inbound-notes-summary" class="notes-summary">
-                <h3><i class="fas fa-sticky-note"></i> 今日入庫備註加總</h3>
-                <div id="inbound-notes-stats" class="notes-stats"></div>
-                <div id="inbound-notes-list" class="notes-list"></div>
-            </div>
         </div>
 
         <div id="tab-settings" class="tab-content">
-            <h2><i class="fas fa-cog"></i> 系統設定</h2>
-
-            <div class="info-box" style="border-left-color: #10b981;">
-                <h3><i class="fas fa-cloud-upload-alt"></i> Google Sheets 同步設定</h3>
-                <p style="background: #d1fae5; padding: 16px; border-radius: 12px;">
-                    <strong>✅ 目前使用方案A (text/plain 跳過預檢)</strong><br>
-                    部署網址已寫死在程式碼中，如需更換請修改 <code style="background: white; padding: 4px 8px; border-radius: 6px;">GAS_URL</code> 變數。
-                </p>
+            <h2><i class="fas fa-cog"></i> 系統設定與管理</h2>
+            
+            <div class="info-box" style="border-left-color: var(--danger-color);">
+                <h3><i class="fas fa-sync-alt"></i> 更新同步問題</h3>
+                <p style="font-size: 0.9rem; margin: 10px 0;">如果您新增了人員或物品卻沒看到，請點擊下方按鈕強制清除舊緩存。</p>
+                <button class="btn-outline-danger" onclick="hardResetSystem()">
+                    <i class="fas fa-trash-can"></i> 強制重整系統資料 (解決更新沒出現的問題)
+                </button>
             </div>
 
-            <div class="info-box" style="border-left-color: #f97316;">
+            <div class="info-box">
+                <h3><i class="fas fa-file-excel"></i> 資料導出</h3>
+                <p style="font-size: 0.9rem; margin: 10px 0;">將存放在此裝置上的暫存紀錄導出為 Excel 檔案。</p>
+                <button class="btn-success" onclick="exportToExcel()">
+                    <i class="fas fa-download"></i> 導出本地紀錄 (.xlsx)
+                </button>
+            </div>
+
+            <div class="info-box">
                 <h3><i class="fas fa-users"></i> 人員管理</h3>
                 <div class="form-row">
-                    <input type="text" id="new-person" placeholder="新增人員名稱">
-                    <button id="add-person" class="btn-success" style="width: auto;"><i class="fas fa-user-plus"></i> 新增</button>
+                    <input type="text" id="new-person" placeholder="輸入姓名">
+                    <button class="btn-success" style="width:80px" onclick="addNew('persons', 'new-person')">新增</button>
                 </div>
-                <div id="person-list" class="record-list" style="max-height: 250px;"></div>
-            </div>
-
-            <div class="info-box" style="border-left-color: #3b82f6;">
-                <h3><i class="fas fa-boxes"></i> 物品管理</h3>
-                <div class="form-row">
-                    <input type="text" id="new-item-name" placeholder="物品名稱">
-                    <input type="text" id="new-item-unit-default" placeholder="預設單位 (如 包、箱)">
-                    <button id="add-item" class="btn-success" style="width: auto;"><i class="fas fa-plus"></i> 新增</button>
-                </div>
-                <div id="item-list" class="record-list" style="max-height: 250px;"></div>
-            </div>
-
-            <div class="info-box" style="border-left-color: #f59e0b;">
-                <h3><i class="fas fa-ruler"></i> 單位管理</h3>
-                <div class="form-row">
-                    <input type="text" id="new-unit" placeholder="新增單位名稱 (例：包、箱、袋)">
-                    <button id="add-unit" class="btn-success" style="width: auto;"><i class="fas fa-plus"></i> 新增</button>
-                </div>
-                <div id="unit-list" class="record-list" style="max-height: 250px;"></div>
-            </div>
-
-            <div class="info-box" style="border-left-color: #8b5cf6;">
-                <h3><i class="fas fa-warehouse"></i> 倉庫管理</h3>
-                <div class="form-row">
-                    <input type="text" id="new-warehouse" placeholder="倉庫名稱">
-                    <button id="add-warehouse" class="btn-success" style="width: auto;"><i class="fas fa-plus"></i> 新增</button>
-                </div>
-                <div id="warehouse-list" class="record-list" style="max-height: 250px;"></div>
-            </div>
-
-            <div class="info-box" style="border-left-color: #6b7280;">
-                <h3><i class="fas fa-database"></i> 資料管理</h3>
-                <div class="form-row">
-                    <button id="export-data" class="btn-primary"><i class="fas fa-download"></i> 匯出 Excel</button>
-                    <button id="import-data" class="btn-secondary"><i class="fas fa-upload"></i> 匯入 JSON</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
-                </div>
-            </div>
-            <div id="settings-status" class="status-message"></div>
-        </div>
-    </div>
-
-    <div id="export-modal" class="modal-overlay">
-        <div class="modal">
-            <h3 style="margin-bottom: 24px;"><i class="fas fa-file-excel"></i> 匯出 Excel 報表</h3>
-            <div class="export-option" onclick="selectExport('all')">
-                <label><input type="radio" name="export-type" value="all" checked id="radio-all"> 📋 今日本地記錄 (Excel)</label>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeModal()" style="width: 50%;">取消</button>
-                <button class="btn-success" onclick="doExport()" style="width: 50%;">下載</button>
+                <div id="list-persons" class="record-list"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // ============================================================
-        //  🚀 庫存管理系統 - 台斤重量版
-        //  ⚠️ 重要：請確保 GAS_URL 網址正確
-        // ============================================================
-       const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPIy6-na3dnCRjzps8tEFVZBCzpRanrQ_k7IzVJhEOkIowMHRRFhRM7f7xB0RysnnX/exec';
-
+        // ======= 核心設定：請更換為您的 GAS 部署網址 =======
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPIy6-na3dnCRjzps8tEFVZBCzpRanrQ_k7IzVJhEOkIowMHRRFhRM7f7xB0RysnnX/exec';
         const TAEL_TO_KG = 0.6;
-        const KG_TO_TAEL = 1 / TAEL_TO_KG;
 
-        // ========== 全域資料結構 (已修正語法錯誤) ==========
+        // ======= 預設資料 (已修正逗號問題) =======
         let inventoryData = {
-            persons: ['蕭詠方', '王珮儒', '王俊智', '朱宥銓', '何致瑩', '蔡惠如', '魏賢豪', '魏銓輝', '洪承億', '張源展', '陳紐庭', '陳冠瑋', '何淑年', '曾瑛婷', '林佳慧', '林美慧', '陳映延', '黃家均'],
+            persons: ['蕭詠方', '王珮儒', '王俊智', '朱宥銓', '何致瑩', '蔡惠如', '魏賢豪', '魏銓輝', '洪承億', '張源展', '陳紐庭', '陳冠瑋', '何淑年', '曾瑛婷', '林佳慧', '林美慧', '陳映延', '張家均'],
             items: [
-                { name: '鳳梨蘋果汁', unit: '包' },
-                { name: '鳳梨汁', unit: '包' },
-                { name: '金鑽鳳梨', unit: '包' },
-                { name: '香檳鳳梨', unit: '包' },
-                { name: '牛奶鳳梨', unit: '包' },
-                { name: '蜜梨鳳梨', unit: '包' },
-                { name: '甜蜜蜜鳳梨', unit: '箱' },
-                { name: '芒果鳳梨', unit: '袋' },
-                { name: '琉璃鳳梨', unit: '袋' },
-                { name: '玉蘭花鳳梨', unit: '袋' },
-                { name: '土鳳梨', unit: '袋' },
-                { name: '蜜梨果乾', unit: '袋' },
-                { name: '甜蜜蜜果乾', unit: '袋' },
-                { name: '琉璃果乾', unit: '袋' },
-                { name: '金鑽圓片果乾', unit: '袋' },
-                { name: '金鑽角塊果乾', unit: '袋' },	
-                { name: '香檳圓片果乾', unit: '袋' },
-                { name: '香檳角塊果乾', unit: '袋' },
-                { name: '牛奶圓片果乾', unit: '袋' },
-                { name: '牛奶角塊果乾', unit: '袋' },
-                { name: '玉蘭花圓片果乾', unit: '袋' },
-                { name: '玉蘭花角塊果乾', unit: '袋' },
-                { name: '芒果鳳梨果乾', unit: '袋' },
-                { name: '金鑽凍乾', unit: '袋' },
-                { name: '香檳凍乾', unit: '袋' },
-                { name: '牛奶凍乾', unit: '袋' },
-                { name: '蜜梨凍乾', unit: '袋' },
-                { name: '甜蜜蜜凍乾', unit: '袋' },
-                { name: '芒果凍乾', unit: '袋' },
-                { name: '琉璃凍乾', unit: '袋' },
-                { name: '玉蘭花凍乾', unit: '盒' },
-                { name: '鳳梨碎肉', unit: '盒' },
-                { name: '鳳梨餡', unit: '盒' },
-                { name: '雞蛋', unit: '盒' },
-                { name: '大豆', unit: '盒' }
+                { name: '鳳梨蘋果汁', unit: '包' }, { name: '鳳梨汁', unit: '包' }, { name: '金鑽鳳梨', unit: '包' },
+                { name: '香檳鳳梨', unit: '包' }, { name: '牛奶鳳梨', unit: '包' }, { name: '蜜梨鳳梨', unit: '包' },
+                { name: '甜蜜蜜鳳梨', unit: '箱' }, { name: '芒果鳳梨', unit: '袋' }, { name: '琉璃鳳梨', unit: '袋' },
+                { name: '玉蘭花鳳梨', unit: '袋' }, { name: '土鳳梨', unit: '袋' }, { name: '蜜梨果乾', unit: '袋' },
+                { name: '甜蜜蜜果乾', unit: '袋' }, { name: '琉璃果乾', unit: '袋' }, { name: '金鑽圓片果乾', unit: '袋' },
+                { name: '金鑽角塊果乾', unit: '袋' }, { name: '香檳圓片果乾', unit: '袋' }, { name: '香檳角塊果乾', unit: '袋' },
+                { name: '牛奶圓片果乾', unit: '袋' }, { name: '牛奶角塊果乾', unit: '袋' }, { name: '玉蘭花圓片果乾', unit: '袋' },
+                { name: '玉蘭花角塊果乾', unit: '袋' }, { name: '芒果鳳梨果乾', unit: '袋' }, { name: '金鑽凍乾', unit: '袋' },
+                { name: '香檳凍乾', unit: '袋' }, { name: '牛奶凍乾', unit: '袋' }, { name: '蜜梨凍乾', unit: '袋' },
+                { name: '甜蜜蜜凍乾', unit: '袋' }, { name: '芒果凍乾', unit: '袋' }, { name: '琉璃凍乾', unit: '袋' },
+                { name: '玉蘭花凍乾', unit: '盒' }, { name: '鳳梨碎肉', unit: '盒' }, { name: '鳳梨餡', unit: '盒' },
+                { name: '雞蛋', unit: '盒' }, { name: '大豆', unit: '盒' }
             ],
+            units: ['小白桶', '籃', '鐵桶', '包', '箱', '個'],
             warehouses: ['A庫', 'B庫', 'C庫'],
-            units: ['包', '箱', '鐵桶', '籃', '小白桶', '個'],
             records: []
         };
 
-        // ========== 初始化 ==========
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            initDateTime();
+        // ======= 初始化系統 =======
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocal();
             initSelects();
-            renderLists();
-            updateNotes('outbound');
-            updateNotes('inbound');
-            setupEventListeners();
-            setupWeightConversion();
-            setupAutoUnitMatching(); // 新增：自動配對單位
+            resetDateTime();
+            setupWeightLogic();
+            setupAutoUnit();
+            renderSettingsLists();
         });
 
-        // ---------- 自動配對單位功能 ----------
-        function setupAutoUnitMatching() {
-            ['outbound', 'inbound'].forEach(type => {
-                const itemSelect = document.getElementById(`${type}-item`);
-                const unitSelect = document.getElementById(`${type}-unit`);
-                
-                itemSelect.addEventListener('change', () => {
-                    const selectedName = itemSelect.value;
-                    const itemObj = inventoryData.items.find(i => i.name === selectedName);
-                    if (itemObj && itemObj.unit) {
-                        unitSelect.value = itemObj.unit;
-                    }
-                });
-            });
-        }
-
-        // ---------- 雙向重量換算 ----------
-        function setupWeightConversion() {
-            ['outbound', 'inbound'].forEach(type => {
-                const taelInput = document.getElementById(`${type}-weight-tael`);
-                const kgInput = document.getElementById(`${type}-weight-kg`);
-                
-                taelInput.addEventListener('input', () => {
-                    const tael = parseFloat(taelInput.value);
-                    if (!isNaN(tael)) kgInput.value = (tael * TAEL_TO_KG).toFixed(2);
-                    else kgInput.value = '';
-                });
-                
-                kgInput.addEventListener('input', () => {
-                    const kg = parseFloat(kgInput.value);
-                    if (!isNaN(kg)) taelInput.value = (kg * KG_TO_TAEL).toFixed(2);
-                    else taelInput.value = '';
-                });
-            });
-        }
-
-        // ---------- 資料儲存/載入 ----------
-        function loadData() {
-            const stored = localStorage.getItem('inventorySystem');
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    inventoryData = { ...inventoryData, ...parsed };
-                } catch (e) { console.error("Load error", e); }
+        // 載入暫存
+        function loadFromLocal() {
+            const saved = localStorage.getItem('inventorySystem_v2');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // 合併紀錄，但保留程式碼中最新的人員與物品清單（除非使用者手動新增過）
+                inventoryData.records = parsed.records || [];
+                if(parsed.persons && parsed.persons.length > inventoryData.persons.length) inventoryData.persons = parsed.persons;
             }
         }
-        function saveData() {
-            localStorage.setItem('inventorySystem', JSON.stringify(inventoryData));
+
+        // 儲存暫存
+        function saveToLocal() {
+            localStorage.setItem('inventorySystem_v2', JSON.stringify(inventoryData));
         }
 
-        function initDateTime() {
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0,10);
-            const timeStr = now.toTimeString().slice(0,5);
-            document.querySelectorAll('input[type="date"]').forEach(el => el.value = dateStr);
-            document.querySelectorAll('input[type="time"]').forEach(el => el.value = timeStr);
-        }
+        // 強制重整 (核心功能)
+        window.hardResetSystem = function() {
+            if (confirm("⚠️ 注意：這將清除此裝置上的自定義設定並載入最新程式碼版本（包含新的人員與物品）。\n\n確定要重整嗎？")) {
+                localStorage.removeItem('inventorySystem_v2');
+                alert("系統已重整，即將重新載入！");
+                location.reload();
+            }
+        };
 
+        // 填充下拉選單
         function initSelects() {
-            const configs = [
-                { ids: ['outbound-person', 'inbound-person'], data: inventoryData.persons, label: '請選擇' },
-                { ids: ['outbound-item', 'inbound-item'], data: inventoryData.items.map(i => i.name), label: '請選擇' },
-                { ids: ['outbound-unit', 'inbound-unit'], data: inventoryData.units, label: '單位' },
-                { ids: ['outbound-warehouse', 'inbound-warehouse'], data: inventoryData.warehouses, label: '請選擇' }
-            ];
+            const fill = (id, list, isObj = false) => {
+                const el = document.getElementById(id);
+                el.innerHTML = '<option value="">- 請選擇 -</option>';
+                list.forEach(item => {
+                    const val = isObj ? item.name : item;
+                    el.innerHTML += `<option value="${val}">${val}</option>`;
+                });
+            };
 
-            configs.forEach(conf => {
-                conf.ids.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    el.innerHTML = `<option value="">${conf.label}</option>`;
-                    conf.data.forEach(item => {
-                        const opt = document.createElement('option');
-                        opt.value = item;
-                        opt.textContent = item;
-                        el.appendChild(opt);
-                    });
+            ['outbound-person', 'inbound-person'].forEach(id => fill(id, inventoryData.persons));
+            ['outbound-item', 'inbound-item'].forEach(id => fill(id, inventoryData.items, true));
+            ['outbound-unit', 'inbound-unit'].forEach(id => fill(id, inventoryData.units));
+            ['outbound-warehouse', 'inbound-warehouse'].forEach(id => fill(id, inventoryData.warehouses));
+        }
+
+        // 自動帶入單位
+        function setupAutoUnit() {
+            ['outbound', 'inbound'].forEach(type => {
+                document.getElementById(`${type}-item`).addEventListener('change', (e) => {
+                    const found = inventoryData.items.find(i => i.name === e.target.value);
+                    if (found) document.getElementById(`${type}-unit`).value = found.unit;
                 });
             });
         }
 
-        // ---------- 事件監聽綁定 ----------
-        function setupEventListeners() {
-            // 提交處理
+        // 重量換算
+        function setupWeightLogic() {
             ['outbound', 'inbound'].forEach(type => {
-                const form = document.getElementById(`${type}Form`);
-                form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = document.getElementById(`${type}-submit-btn`);
-                    if (btn.disabled) return;
-                    btn.disabled = true;
-
-                    try {
-                        const tael = parseFloat(document.getElementById(`${type}-weight-tael`).value);
-                        const kg = parseFloat(document.getElementById(`${type}-weight-kg`).value);
-                        
-                        const record = {
-                            id: Date.now(),
-                            date: document.getElementById(`${type}-date`).value,
-                            time: document.getElementById(`${type}-time`).value,
-                            type: type === 'outbound' ? '出庫' : '入庫',
-                            operator: document.getElementById(`${type}-person`).value,
-                            item: document.getElementById(`${type}-item`).value,
-                            unit: document.getElementById(`${type}-unit`).value,
-                            quantity: parseInt(document.getElementById(`${type}-quantity`).value) || 0,
-                            weightTael: tael || 0,
-                            weightKg: kg || 0,
-                            warehouse: document.getElementById(`${type}-warehouse`).value,
-                            notes: document.getElementById(`${type}-notes`).value
-                        };
-
-                        inventoryData.records.push(record);
-                        saveData();
-
-                        const res = await syncToSheet(record);
-                        if (res.success) {
-                            showStatus(`${type}-status`, `✅ 同步成功！`, 'success');
-                        } else {
-                            showStatus(`${type}-status`, `⚠️ 已存於本地，但同步失敗`, 'warning');
-                        }
-                        
-                        form.reset();
-                        initDateTime();
-                        updateNotes(type);
-                    } catch (err) {
-                        showStatus(`${type}-status`, `❌ 錯誤: ${err.message}`, 'error');
-                    } finally {
-                        setTimeout(() => btn.disabled = false, 3000);
-                    }
-                });
+                const tael = document.getElementById(`${type}-weight-tael`);
+                const kg = document.getElementById(`${type}-weight-kg`);
+                tael.oninput = () => kg.value = tael.value ? (tael.value * TAEL_TO_KG).toFixed(2) : '';
+                kg.oninput = () => tael.value = kg.value ? (kg.value / TAEL_TO_KG).toFixed(2) : '';
             });
+        }
 
-            // 管理按鈕
-            document.getElementById('add-person').onclick = () => addItem('persons', 'new-person');
-            document.getElementById('add-item').onclick = () => {
-                const name = document.getElementById('new-item-name').value.trim();
-                const unit = document.getElementById('new-item-unit-default').value.trim();
-                if (name && unit) {
-                    inventoryData.items.push({ name, unit });
-                    saveData(); initSelects(); renderLists();
-                    document.getElementById('new-item-name').value = '';
-                    document.getElementById('new-item-unit-default').value = '';
+        // 提交表單
+        ['outbound', 'inbound'].forEach(type => {
+            document.getElementById(`${type}Form`).onsubmit = async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById(`${type}-btn`);
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+
+                const record = {
+                    date: document.getElementById(`${type}-date`).value,
+                    time: document.getElementById(`${type}-time`).value,
+                    type: type === 'outbound' ? '出庫' : '入庫',
+                    operator: document.getElementById(`${type}-person`).value,
+                    item: document.getElementById(`${type}-item`).value,
+                    unit: document.getElementById(`${type}-unit`).value,
+                    quantity: document.getElementById(`${type}-quantity`).value,
+                    weightTael: document.getElementById(`${type}-weight-tael`).value || 0,
+                    weightKg: document.getElementById(`${type}-weight-kg`).value || 0,
+                    warehouse: document.getElementById(`${type}-warehouse`).value,
+                    notes: document.getElementById(`${type}-notes`).value
+                };
+
+                try {
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(record)
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        inventoryData.records.push(record);
+                        saveToLocal();
+                        showStatus(`${type}-status`, '✅ 同步成功！資料已寫入雲端。', 'success');
+                        e.target.reset();
+                        resetDateTime();
+                    } else { throw new Error(); }
+                } catch (err) {
+                    showStatus(`${type}-status`, '❌ 同步失敗，請檢查網路或 GAS 網址。', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fas fa-cloud-arrow-up"></i> 提交${type === 'outbound' ? '出庫' : '入庫'}並同步`;
                 }
             };
-            document.getElementById('add-unit').onclick = () => addItem('units', 'new-unit');
-            document.getElementById('add-warehouse').onclick = () => addItem('warehouses', 'new-warehouse');
-            
-            document.getElementById('export-data').onclick = openExportModal;
-            document.getElementById('import-data').onclick = () => document.getElementById('import-file').click();
-            document.getElementById('import-file').onchange = importJSON;
-        }
+        });
 
-        function addItem(key, inputId) {
-            const val = document.getElementById(inputId).value.trim();
-            if (val && !inventoryData[key].includes(val)) {
-                inventoryData[key].push(val);
-                saveData(); initSelects(); renderLists();
-                document.getElementById(inputId).value = '';
-            }
-        }
-
-        async function syncToSheet(record) {
-            try {
-                const response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(record)
-                });
-                return await response.json();
-            } catch (e) {
-                return { success: false };
-            }
-        }
-
-        function updateNotes(type) {
-            const today = new Date().toISOString().slice(0,10);
-            const chn = type === 'outbound' ? '出庫' : '入庫';
-            const todayRecords = inventoryData.records.filter(r => r.date === today && r.type === chn);
-            const hasNotes = todayRecords.filter(r => r.notes && r.notes.trim() !== '');
-
-            const statsDiv = document.getElementById(`${type}-notes-stats`);
-            if (statsDiv) {
-                statsDiv.innerHTML = `
-                    <div class="stat-box"><div class="stat-number">${todayRecords.length}</div><div>今日記錄</div></div>
-                    <div class="stat-box"><div class="stat-number">${hasNotes.length}</div><div>有備註</div></div>
-                    <div class="stat-box"><div class="stat-number">${todayRecords.length ? Math.round(hasNotes.length/todayRecords.length*100) : 0}%</div><div>備註率</div></div>
-                `;
-            }
-            const listDiv = document.getElementById(`${type}-notes-list`);
-            if (listDiv) {
-                listDiv.innerHTML = hasNotes.length ? hasNotes.map(r => `
-                    <div class="note-item">
-                        <strong>📌 ${r.notes}</strong>
-                        <div style="color:#6b7280; margin-top: 6px; font-size:0.9rem;">
-                            ${r.operator} · ${r.item} ${r.quantity}${r.unit} · ${r.time}
-                        </div>
-                    </div>
-                `).join('') : '<div class="empty-state">今日無備註</div>';
-            }
-        }
-
-        function renderLists() {
-            const containerMap = {
-                persons: 'person-list',
-                units: 'unit-list',
-                warehouses: 'warehouse-list'
-            };
-            for (let key in containerMap) {
-                const el = document.getElementById(containerMap[key]);
-                el.innerHTML = inventoryData[key].map((item, i) => `
-                    <div class="record-item">
-                        <span>${item}</span>
-                        <button class="btn-danger" style="width:auto; padding:8px 12px;" onclick="deleteItem('${key}', ${i})"><i class="fas fa-trash"></i></button>
-                    </div>
-                `).join('');
-            }
-            // 物品清單
-            document.getElementById('item-list').innerHTML = inventoryData.items.map((item, i) => `
-                <div class="record-item">
-                    <span><strong>${item.name}</strong> (${item.unit})</span>
-                    <button class="btn-danger" style="width:auto; padding:8px 12px;" onclick="deleteItem('items', ${i})"><i class="fas fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
-
-        window.deleteItem = (key, i) => {
-            if (confirm('確定刪除？')) {
-                inventoryData[key].splice(i, 1);
-                saveData(); initSelects(); renderLists();
-            }
-        };
-
-        // ---------- 匯出與匯入功能 ----------
-        function openExportModal() { document.getElementById('export-modal').classList.add('active'); }
-        window.closeModal = () => document.getElementById('export-modal').classList.remove('active');
-        window.selectExport = (val) => document.getElementById('radio-all').checked = true;
-
-        window.doExport = function() {
-            if (inventoryData.records.length === 0) {
-                alert("目前沒有本地記錄可匯出");
-                return;
-            }
-            // 真正的 XLSX 匯出實作
+        // 導出 Excel
+        window.exportToExcel = function() {
+            if (inventoryData.records.length === 0) return alert("目前沒有本地紀錄可導出");
             const ws = XLSX.utils.json_to_sheet(inventoryData.records);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "庫存記錄");
-            XLSX.writeFile(wb, `庫存報表_${new Date().toISOString().slice(0,10)}.xlsx`);
-            closeModal();
+            XLSX.utils.book_append_sheet(wb, ws, "庫存紀錄");
+            XLSX.writeFile(wb, `庫存報表_${new Date().toLocaleDateString()}.xlsx`);
         };
 
-        function importJSON(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    if (confirm('匯入將覆蓋現有設定，確定？')) {
-                        inventoryData = data;
-                        saveData(); location.reload();
-                    }
-                } catch (err) { alert('檔案格式錯誤'); }
-            };
-            reader.readAsText(file);
+        // UI 輔助功能
+        function resetDateTime() {
+            const now = new Date();
+            document.querySelectorAll('input[type="date"]').forEach(el => el.value = now.toISOString().split('T')[0]);
+            document.querySelectorAll('input[type="time"]').forEach(el => el.value = now.toTimeString().slice(0,5));
         }
 
-        function showStatus(id, msg, type) {
+        function showStatus(id, msg, cls) {
             const el = document.getElementById(id);
-            el.textContent = msg;
-            el.className = `status-message status-${type}`;
+            el.textContent = msg; el.className = `status-message status-${cls}`;
             el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
+            setTimeout(() => el.style.display = 'none', 4000);
         }
 
         window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${id}`).classList.add('active');
             event.currentTarget.classList.add('active');
+        };
+
+        function renderSettingsLists() {
+            const list = document.getElementById('list-persons');
+            list.innerHTML = inventoryData.persons.map((p, i) => `
+                <div class="record-item"><span>${p}</span><i class="fas fa-times" style="color:red;cursor:pointer" onclick="removeData('persons', ${i})"></i></div>
+            `).join('');
+        }
+
+        window.addNew = (key, inputId) => {
+            const val = document.getElementById(inputId).value.trim();
+            if (val) {
+                inventoryData[key].push(val);
+                saveToLocal(); initSelects(); renderSettingsLists();
+                document.getElementById(inputId).value = '';
+            }
+        };
+
+        window.removeData = (key, i) => {
+            if (confirm("確定刪除？")) {
+                inventoryData[key].splice(i, 1);
+                saveToLocal(); initSelects(); renderSettingsLists();
+            }
         };
     </script>
 </body>
